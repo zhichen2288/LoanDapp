@@ -3,17 +3,22 @@ pragma solidity ^0.8.20;
 
 
 import "./IERC20.sol";
+import "./BondingCurve.sol";
 
 
 contract LoanFactory {
     // set start and end to tract time period
     uint startAt;
     uint endAt;
+    uint public IR;
 
+    // make a pointer to IERC20 contract
     IERC20 public immutable token;
+    BondingCurve public immutable curve;
 
-    constructor(address _token){
+    constructor(address _token, address _curve){
         token = IERC20(_token);
+        curve = BondingCurve(_curve);
     }
 
 
@@ -69,8 +74,8 @@ contract LoanFactory {
     // make an application to get specific amount of loan
     function getLoan(uint _target) external {
 
-            startAt = block.timestamp + 2 minutes;
-            endAt = startAt + 3 minutes;
+            startAt = block.timestamp + 1 minutes;
+            endAt = startAt + 1 minutes;
          
             applicationsMP[applicationID] = Application({
                 borrower: msg.sender,
@@ -83,6 +88,14 @@ contract LoanFactory {
             applicationID += 1;
 
             emit LoanLog(applicationID, msg.sender, _target);
+    }
+
+
+    function getInterestRate(uint _target, uint _downpayment) external returns(uint){
+        uint IDRatio = (_downpayment/_target)*100;
+        IR = curve.getInteresRate(IDRatio);
+
+        return IR;
     }
 
 
@@ -163,13 +176,6 @@ contract LoanFactory {
         emit refundLog(_lenderID, msg.sender, onelenderfund);
         
     }
-
-
-
-
-
-
-
 
 
 
